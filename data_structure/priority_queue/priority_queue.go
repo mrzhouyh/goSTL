@@ -34,7 +34,7 @@ type priority_queueer interface {
 	Clear()               //清空该容器
 	Empty() (b bool)      //判断该容器是否为空
 	Push(e interface{})   //将元素e插入该容器
-	Pop()                 //弹出顶部元素
+	Pop() (e interface{}) //弹出顶部元素
 	Top() (e interface{}) //返回顶部元素
 }
 
@@ -197,17 +197,18 @@ func (pq *Priority_queue) up(p uint64) {
 //@receiver		pq			*Priority_queue					接受者priority_queue的指针
 //@param    	nil
 //@return    	nil
-func (pq *Priority_queue) Pop() {
+func (pq *Priority_queue) Pop() (e interface{}) {
 	if pq == nil {
 		pq = New()
 	}
 	if pq.Empty() {
-		return
+		e = nil
 	}
 	pq.mutex.Lock()
 	//将最后一位移到首位,随后删除最后一位,即删除了首位,同时判断是否需要缩容
+	e = pq.data[0]
 	pq.data[0] = pq.data[pq.len-1]
-	pq.data[pq.len-1]=nil
+	pq.data[pq.len-1] = nil
 	pq.len--
 	//缩容判断,缩容策略同vector,即先固定缩容在折半缩容
 	if pq.cap-pq.len >= 65536 {
@@ -231,6 +232,7 @@ func (pq *Priority_queue) Pop() {
 	//对首位进行下降操作,即对比其逻辑上的左右结点判断是否应该下降,再递归该过程即可
 	pq.down(0)
 	pq.mutex.Unlock()
+	return
 }
 
 //@title    down
